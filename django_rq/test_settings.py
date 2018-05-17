@@ -127,7 +127,7 @@ RQ_QUEUES = {
         'HOST': REDIS_HOST,
         'PORT': 6379,
         'DB': 1,
-        'ASYNC': False,
+        'SYNC': True,
     },
     'url': {
         'URL': 'redis://username:password@host:1234/',

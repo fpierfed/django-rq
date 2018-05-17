@@ -307,12 +307,12 @@ class QueuesTest(TestCase):
         """
         Checks whether asynchronous settings work
         """
-        # Make sure async is not set by default
+        # Make sure sync is not set by default
         default_queue = get_queue('default')
         self.assertTrue(default_queue._async)
 
-        # Make sure async override works
-        default_queue_async = get_queue('default', async=False)
+        # Make sure sync override works
+        default_queue_async = get_queue('default', sync=True)
         self.assertFalse(default_queue_async._async)
 
         # Make sure async setting works

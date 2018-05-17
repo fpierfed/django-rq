@@ -129,16 +129,23 @@ def get_connection_by_index(index):
     return get_redis_connection(QUEUES_LIST[index]['connection_config'])
 
 
-def get_queue(name='default', default_timeout=None, async=None,
+def get_queue(name='default', default_timeout=None, sync=None,
               autocommit=None, queue_class=None, job_class=None, **kwargs):
     """
     Returns an rq Queue using parameters defined in ``RQ_QUEUES``
     """
     from .settings import QUEUES
 
-    # If async is provided, use it, otherwise, get it from the configuration
-    if async is None:
-        async = QUEUES[name].get('ASYNC', True)
+    # Backward compatibility (only if sync is not used)
+    if sync is None and 'async' in kwargs:
+        value = kwargs.pop('async')
+        if value is not None:
+            sync = not value
+
+    # If sync is provided, use it, otherwise, get it from the configuration
+    # Backward compatibility: if SYNC is not in setting, look for the old ASYNC
+    if sync is None:
+        sync = QUEUES[name].get('SYNC', not QUEUES[name].get('ASYNC', True))
     # same for job_class
     job_class = get_job_class(job_class)
 
@@ -146,7 +153,7 @@ def get_queue(name='default', default_timeout=None, async=None,
         default_timeout = QUEUES[name].get('DEFAULT_TIMEOUT')
     queue_class = get_queue_class(QUEUES[name], queue_class)
     return queue_class(name, default_timeout=default_timeout,
-                       connection=get_connection(name), async=async,
+                       connection=get_connection(name), sync=sync,
                        job_class=job_class, autocommit=autocommit, **kwargs)
 
 
@@ -161,7 +168,8 @@ def get_queue_by_index(index):
     return get_queue_class(config)(
         config['name'],
         connection=get_redis_connection(config['connection_config']),
-        async=config.get('ASYNC', True))
+        # Backward comp: if SYNC is not in setting, look for the old ASYNC
+        sync=config.get('SYNC', not config.get('ASYNC', True)))
 
 
 def get_failed_queue(name='default'):
